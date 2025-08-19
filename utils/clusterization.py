@@ -78,8 +78,8 @@ def elbow_analysis(results_dict):
     
     # Grafico riduzione percentuale
     ax2.bar(K_range[1:], reduction_pct, alpha=0.7, color='orange')
-    ax2.axhline(3, color='darkred', linestyle=':', alpha=0.7, 
-                label='3% threshold')
+    ax2.axhline(3.5, color='darkred', linestyle=':', alpha=0.7, 
+                label='3,5% threshold')
     ax2.axvline(k_elbow, color='navy', linestyle='--', alpha=0.6)
     ax2.axvline(9, color='darkred', linestyle='--', alpha=0.6)
     ax2.set_xlabel('Number of Clusters (k)')
@@ -97,3 +97,67 @@ def elbow_analysis(results_dict):
     plt.show()
     
     return k_elbow, reduction_pct
+
+
+########################################### gap statistics
+
+def gap_statistic(X_data, K_range,results, n_refs=20, random_state=42):
+    """
+    Calculate Gap Statistic to find the optimal number of clusters
+    """
+    np.random.seed(random_state)
+    
+    # Get data range for creating random datasets
+    min_vals = X_data.min(axis=0)
+    max_vals = X_data.max(axis=0)
+    
+    gaps = []
+    errors = []
+    
+    for k in K_range:
+        
+        # Use already computed inertia from previous analysis
+        real_inertia = results["inertia"][k-2]  
+        
+        # Generate random datasets and compute their inertias
+        random_inertias = []
+        for i in range(n_refs):
+            # Create random data with same shape and range as real data
+            random_data = np.random.uniform(min_vals, max_vals, size=X_data.shape)
+            
+            # Apply K-means to random data
+            kmeans = KMeans(n_clusters=k, random_state=i, n_init=10)
+            kmeans.fit(random_data)
+            random_inertias.append(kmeans.inertia_)
+        
+        # Calculate gap statistic
+        log_real = np.log(real_inertia)
+        log_random = np.log(random_inertias)
+        
+        gap = np.mean(log_random) - log_real
+        error = np.sqrt(1 + 1.0/n_refs) * np.std(log_random, ddof=1)
+        
+        gaps.append(gap)
+        errors.append(error)
+    
+    # Find optimal k using the standard rule
+    optimal_k = K_range[0]
+    for i in range(len(K_range) - 1):
+        if gaps[i] >= gaps[i+1] - errors[i+1]:
+            optimal_k = K_range[i]
+            break
+    
+    # Create the plot
+    plt.figure(figsize=(10, 6))
+    plt.errorbar(K_range, gaps, yerr=errors, fmt='o-', capsize=5, color='blue')
+    plt.axvline(optimal_k, color='red', linestyle='--', 
+                label=f'Optimal k = {optimal_k}')
+    plt.xlabel('Number of Clusters (k)')
+    plt.ylabel('Gap Statistic')
+    plt.title('Gap Statistic Analysis')
+    plt.grid(True, alpha=0.3)
+    plt.legend()
+    
+    plt.show()
+    
+    return optimal_k, gaps, errors
