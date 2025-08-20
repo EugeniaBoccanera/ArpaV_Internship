@@ -75,7 +75,7 @@ def scatter_plot_3d(X_pca):
     ax = fig.add_subplot(111, projection='3d')
 
     scatter = ax.scatter(X_pca[:, 0], X_pca[:, 1], X_pca[:, 2], 
-                    alpha=0.6, s=20, c=X_pca[:, 0], cmap='viridis')
+                    alpha=0.6, s=20, c=X_pca[:, 3], cmap='viridis')
     ax.set_xlabel('PC1 (First Principal Component)')
     ax.set_ylabel('PC2 (Second Principal Component)')
     ax.set_zlabel('PC3 (Third Principal Component)')
