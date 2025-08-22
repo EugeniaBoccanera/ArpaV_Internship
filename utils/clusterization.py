@@ -5,22 +5,29 @@ import numpy as np
 from sklearn.cluster import KMeans
 import matplotlib.pyplot as plt
 from sklearn.metrics import silhouette_samples, silhouette_score
+from sklearn.metrics import davies_bouldin_score
 
 
 ########################################### kmeans
 
 def kmeans(X_pca,K_range,n_init=20):
+    """
+    Performs K-means clustering on the PCA-transformed data.
+    """
     inertia = []
+    all_labels = {}
 
     for k in K_range:
         kmeans = KMeans(n_clusters=k, random_state=42, n_init=n_init)
         labels = kmeans.fit_predict(X_pca)
         inertia.append(kmeans.inertia_)
+        all_labels[k] = labels
 
     # Save results for later analysis
     results = {
         "K_range": list(K_range),
-        "inertia": inertia
+        "inertia": inertia,
+        "labels": all_labels
     }
     return results
 
@@ -28,35 +35,35 @@ def kmeans(X_pca,K_range,n_init=20):
 ########################################### elbow analysis
 def elbow_analysis(results_dict, min_significant_diff=0.8):
     """
-    Analizza l'elbow method con detection automatica del punto di cambio della derivata
+    Analyzes the elbow method with automatic detection of derivative change point
     """
     K_range = results_dict["K_range"]
     inertias = results_dict["inertia"]
-    
-    # Calcolo riduzione percentuale
+
+    # Calculate percentage reduction
     reduction_percentage = []
     for i in range(1, len(inertias)):
         reduction = (inertias[i-1] - inertias[i]) / inertias[i-1] * 100
         reduction_percentage.append(reduction)
 
-    # Calcolo delle differenze tra riduzioni consecutive (seconda derivata)
+    # Calculate differences between consecutive reductions (second derivative)
     reduction_diffs = []
     for i in range(1, len(reduction_percentage)):
         diff = abs(reduction_percentage[i-1] - reduction_percentage[i])
         reduction_diffs.append(diff)
     
-    # Trova il punto dove la differenza scende drasticamente
+    # Find the point where the difference drops drastically
     k_optimal_derivative = None
     for i in range(len(reduction_diffs) - 1):
         current_diff = reduction_diffs[i]
         next_diff = reduction_diffs[i + 1]
         
-        # Se la differenza scende sotto la soglia significativa
+        # If the difference drops below the significant threshold
         if current_diff > min_significant_diff and next_diff < min_significant_diff:
-            k_optimal_derivative = K_range[i + 2]  # +2 perché reduction_diffs parte da k=3
+            k_optimal_derivative = K_range[i + 2]  # +2 because reduction_diffs starts from k=3
             break
-    
-    # Metodo elbow geometrico 
+
+    # Geometric elbow method
     def find_elbow_point(x, y):
         first_point = np.array([x[0], y[0]])
         last_point = np.array([x[-1], y[-1]])
@@ -69,10 +76,10 @@ def elbow_analysis(results_dict, min_significant_diff=0.8):
     
     k_elbow_geometric = find_elbow_point(K_range, inertias)
     
-    # Grafici migliorati
+    # Plots
     fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(16, 12))
-    
-    # 1. Elbow classico
+
+    # 1. Classic elbow
     ax1.plot(K_range, inertias, 'bo-', linewidth=2, markersize=8)
     ax1.axvline(k_elbow_geometric, color='navy', linestyle='--', alpha=0.7, 
                 label=f'Geometric Elbow: k={k_elbow_geometric}')
@@ -86,11 +93,11 @@ def elbow_analysis(results_dict, min_significant_diff=0.8):
     ax1.legend()
 
     ax2.axis('off')
-    
-    # 2. Riduzione percentuale
+
+    # 2. Percentage reduction
     bars = ax3.bar(K_range[1:], reduction_percentage, alpha=0.7, color='orange')
     if k_optimal_derivative:
-        # Evidenzia la barra del k ottimale
+        # Highlight the bar for the optimal k
         idx = k_optimal_derivative - K_range[0] - 1
         if 0 <= idx < len(bars):
             bars[idx].set_color('red')
@@ -101,21 +108,21 @@ def elbow_analysis(results_dict, min_significant_diff=0.8):
     ax3.set_title('Percentage Reduction of Inertia')
     ax3.grid(True, alpha=0.3)
     ax3.legend()
-    
-    # Valori sulle barre
+
+    # Values on the bars
     for k, reduction in zip(K_range[1:], reduction_percentage):
         ax3.text(k, reduction + 0.2, f'{reduction:.1f}%', 
                 ha='center', va='bottom', fontsize=9)
     
     
-    # 3. Differenze tra riduzioni consecutive 
+    # 3. Differences between consecutive reductions 
     if len(reduction_diffs) > 0:
         bars4 = ax4.bar(K_range[2:], reduction_diffs, alpha=0.7, color='green')
         ax4.axhline(min_significant_diff, color='red', linestyle='--', alpha=0.7,
                     label=f'Significance threshold: {min_significant_diff}%')
         
         if k_optimal_derivative:
-            # Evidenzia il punto di cambio
+            # Highlight the change point
             idx = k_optimal_derivative - K_range[0] - 2
             if 0 <= idx < len(bars4):
                 bars4[idx].set_color('red')
@@ -127,7 +134,7 @@ def elbow_analysis(results_dict, min_significant_diff=0.8):
         ax4.grid(True, alpha=0.3)
         ax4.legend()
         
-        # Valori sulle barre
+        # Values on bars
         for k, diff in zip(K_range[2:], reduction_diffs):
             ax4.text(k, diff + 0.05, f'{diff:.1f}%', 
                     ha='center', va='bottom', fontsize=9)
@@ -205,16 +212,16 @@ def gap_statistic(X_data, K_range,results, n_refs=20, random_state=42):
 ############################################### silhouette analysis
 def silhouette_analysis(X, k_values, random_state=42):
     """
-    Analizes the silhouette for different values of k
+    Analyzes the silhouette for different values of k
     """
-    # Calcolo il numero di righe e colonne necessarie
+    # Calculate the number of rows and columns needed
     n_plots = len(k_values)
     n_cols = 3
-    n_rows = (n_plots + n_cols - 1) // n_cols  # Ceiling division
+    n_rows = (n_plots + n_cols - 1) // n_cols  
     
     fig, axes = plt.subplots(n_rows, n_cols, figsize=(15, 5 * n_rows))
     
-    # Se abbiamo solo una riga, axes potrebbe non essere 2D
+     # If we have only one row, axes might not be 2D
     if n_rows == 1:
         axes = axes.reshape(1, -1)
     axes = axes.flatten()
@@ -222,36 +229,36 @@ def silhouette_analysis(X, k_values, random_state=42):
     scores = []
 
     for i, k in enumerate(k_values):
-        # Applico K-means
+        # Apply K-means
         kmeans = KMeans(n_clusters=k, random_state=random_state)
         labels = kmeans.fit_predict(X)
-        
-        # Calcolo silhouette score
+
+        # Calculate silhouette score
         sil_score = silhouette_score(X, labels)
         sil_samples = silhouette_samples(X, labels)
         scores.append(sil_score)
         
-        # Creo il grafico
+        # Create the plot
         ax = axes[i]
         y_pos = 0
-        
-        # Per ogni cluster disegno la silhouette
+
+        # For each cluster draw the silhouette
         for cluster in range(k):
             cluster_sil = sil_samples[labels == cluster]
             cluster_sil.sort()
             
-            # Disegno la barra del cluster
+            # Draw the cluster bar
             ax.fill_betweenx(range(y_pos, y_pos + len(cluster_sil)), 
                             0, cluster_sil, alpha=0.7)
             y_pos += len(cluster_sil)
         
-        # Linea della media
+        # Mean line
         ax.axvline(sil_score, color='red', linestyle='--')
         ax.set_title(f'k={k}, Mean Silhouette: {sil_score:.3f}')
         ax.set_xlabel('Silhouette Coefficient')
         ax.set_ylabel('Sample Index')
-    
-    # Rimuovo subplot non usati
+
+    # Remove unused subplots
     for i in range(len(k_values), len(axes)):
         axes[i].remove()
     
@@ -259,3 +266,56 @@ def silhouette_analysis(X, k_values, random_state=42):
     plt.show()
     
     return scores
+
+
+################################################# davies_bouldin index
+
+def davies_bouldin_analysis(X_pca, k_values, results, random_state=42):
+    """
+    Compute the Davies-Bouldin index for different values of k.
+    """
+    db_scores = []
+    
+    for k in k_values:
+        # Use the kmeans results
+        if k in results["labels"]:
+            labels = results["labels"][k]
+
+            # Compute Davies-Bouldin score
+            db_score = davies_bouldin_score(X_pca, labels)
+            db_scores.append(db_score)
+
+    # Find best k (lower score)
+    if db_scores:
+        optimal_k = k_values[np.argmin(db_scores)]
+        min_score = min(db_scores)
+        
+        print(f"Best value for k={optimal_k} (DB = {min_score:.3f})")
+        
+        # Plots
+        plt.figure(figsize=(10, 6))
+        plt.plot(k_values[:len(db_scores)], db_scores, 'bo-', linewidth=2, markersize=8)
+        plt.axhline(y=2.0, color='green', linestyle='--', alpha=0.7, label='Goodness limit (2.0)')
+
+        # Highlight the smaller value
+        min_idx = np.argmin(db_scores)
+        plt.plot(k_values[min_idx], db_scores[min_idx], 'ro', markersize=12, 
+                 label=f'Best for k={optimal_k}')
+        
+        plt.xlabel('Number of clusters (k)')
+        plt.ylabel('Davies-Bouldin Index')
+        plt.title('Davies-Bouldin Index')
+        plt.grid(True, alpha=0.3)
+        plt.legend()
+        plt.xticks(k_values[:len(db_scores)])
+        plt.ylim(1.5,2.05)
+        
+        # Annotate the values
+        for i, (k, score) in enumerate(zip(k_values[:len(db_scores)], db_scores)):
+            plt.annotate(f'{score:.2f}', (k, score), 
+                        textcoords="offset points", xytext=(0,10), ha='center')
+        
+        plt.tight_layout()
+        plt.show()
+    
+    return db_scores

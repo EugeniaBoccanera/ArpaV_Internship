@@ -6,6 +6,9 @@ import numpy as np
 import shapefile as shp
 
 def plot_variance(explained_variance_ratio, cumulative_variance, n_components):
+    """
+    Plots explained variance analysis for PCA components
+    """
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 5))
 
     # Plot 1: Individual explained variance ratio
@@ -18,8 +21,6 @@ def plot_variance(explained_variance_ratio, cumulative_variance, n_components):
 
     # Plot 2: Cumulative explained variance
     ax2.plot(range(1, len(cumulative_variance) + 1), cumulative_variance, 'r-', linewidth=2)
-    ax2.axhline(y=0.80, color='orange', linestyle='--', alpha=0.7, label='80%')
-    ax2.axhline(y=0.85, color='blue', linestyle='--', alpha=0.7, label='85%')
     ax2.axhline(y=0.90, color='green', linestyle='--', alpha=0.7, label='90%')
     ax2.axhline(y=0.95, color='purple', linestyle='--', alpha=0.7, label='95%')
     ax2.set_xlabel('Number of Components')
@@ -29,6 +30,7 @@ def plot_variance(explained_variance_ratio, cumulative_variance, n_components):
     ax2.grid(True, alpha=0.3)
     ax2.set_xlim(1, n_components)
     ax2.set_ylim(0, 1)
+    ax2.set_xticks(range(1, n_components + 1))
 
     plt.tight_layout()
     plt.show()
@@ -36,6 +38,9 @@ def plot_variance(explained_variance_ratio, cumulative_variance, n_components):
 #########################################################################
 
 def scatter_plot_2d(X_pca):
+    """
+    Creates 2D scatter plots of principal components
+    """
     fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(13, 10))
 
     ax1.scatter(X_pca[:, 0], X_pca[:, 1], alpha=0.6, s=20, c='navy')
@@ -71,6 +76,9 @@ def scatter_plot_2d(X_pca):
 #################################################################################
 
 def scatter_plot_3d(X_pca):
+    """
+    Creates 3D scatter plot of first three principal components
+    """
     fig = plt.figure(figsize=(12, 8))
     ax = fig.add_subplot(111, projection='3d')
 
@@ -108,6 +116,9 @@ def add_country_boundaries(ax, sf, color='black'):
 #################################################################################
 
 def visualization_pca_coefficient(components_to_plot, pressure_levels, lats, lons,n_pressure, n_lat, n_lon, sf=None):
+    """
+    Visualizes PCA coefficient spatial patterns for each pressure level
+    """
     for pc_coefficients, pc_name, pc_title in components_to_plot:
 
         # Forma originale dei coefficienti
