@@ -16,8 +16,8 @@ def prepare_data_matrix(dataset):
 
     # Loop over the variables
     for var in dataset.data_vars:
-        print(f"   • Processing {var}...")
-        var_data = dataset[var]   # var_data.dims = ('time', 'isobaricInhPa', 'latitude', 'longitude')
+        print(f"Processing {var}...")
+        var_data = dataset[var]   # var_data.dims = ('time', 'pressure_z or _t', 'latitude', 'longitude')
         
         # Reorganize dimensions: (time, features)
         if 'time' in var_data.dims:
@@ -28,12 +28,16 @@ def prepare_data_matrix(dataset):
                 stacked = var_data.stack(features=spatial_dims)       # From shape: (time=1827, pressure=3, lat=201, lon=321)
                 # conversion to a numpy array
                 matrix = stacked.values        # To:  shape(time=1827, features=193563)  (3×201×321=193563) for each variable
+                print(f"     → {var}: {var_data.dims} → {matrix.shape}")
 
         data_matrices[var] = matrix
     
     # Concatenate all variables
     all_matrices = list(data_matrices.values())
     combined_matrix = np.concatenate(all_matrices, axis=1) # concatenate along the columns (horizontally)
+
+    print(f"\nCombined matrix shape: {combined_matrix.shape}")
+    
 
     return combined_matrix, data_matrices
 

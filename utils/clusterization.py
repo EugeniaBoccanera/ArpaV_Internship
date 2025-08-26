@@ -16,18 +16,21 @@ def kmeans(X_pca,K_range,n_init=20):
     """
     inertia = []
     all_labels = {}
+    all_centroids = {}
 
     for k in K_range:
         kmeans = KMeans(n_clusters=k, random_state=42, n_init=n_init)
         labels = kmeans.fit_predict(X_pca)
         inertia.append(kmeans.inertia_)
         all_labels[k] = labels
+        all_centroids[k] = kmeans.cluster_centers_
 
     # Save results for later analysis
     results = {
         "K_range": list(K_range),
         "inertia": inertia,
-        "labels": all_labels
+        "labels": all_labels,
+        "centroids": all_centroids
     }
     return results
 
