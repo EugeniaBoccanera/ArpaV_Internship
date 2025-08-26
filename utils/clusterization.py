@@ -82,12 +82,12 @@ def elbow_analysis(results_dict, min_significant_diff=0.8):
     # Plots
     fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(16, 12))
 
-    # 1. Classic elbow
+    # 1. Classic elbow (Inertia vs k)
     ax1.plot(K_range, inertias, 'bo-', linewidth=2, markersize=8)
     ax1.axvline(k_elbow_geometric, color='navy', linestyle='--', alpha=0.7, 
                 label=f'Geometric Elbow: k={k_elbow_geometric}')
     if k_optimal_derivative:
-        ax1.axvline(k_optimal_derivative, color='red', linestyle='--', alpha=0.7,
+        ax1.axvline(k_optimal_derivative, color='navy', linestyle='-.', alpha=0.7,
                     label=f'Derivative Method: k={k_optimal_derivative}')
     ax1.set_xlabel('Number of Clusters (k)')
     ax1.set_ylabel('Inertia')
