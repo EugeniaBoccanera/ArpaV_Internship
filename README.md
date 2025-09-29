@@ -5,7 +5,7 @@ Project developed at ARPA Veneto from 21 July to 30 September, 2025. The goal is
 ### INSTRUCTION TO NAVIGATE INTO THE FILES
 **N.B.** The data are not included because they are too large.
 
-Repository contents:
+_Repository contents_:
 
 **B-60_years** → contains the 4 files required to run the analysis, as well as the folder for saving intermediate results.
 
