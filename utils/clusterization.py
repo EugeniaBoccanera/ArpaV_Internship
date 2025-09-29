@@ -136,13 +136,16 @@ def elbow_analysis(results_dict, min_significant_diff=0.8):
         ax4.set_title('Rate of Change in Reduction (Second Derivative)')
         ax4.grid(True, alpha=0.3)
         ax4.legend()
-        
+
+        # Global title  - ---variation
+        plt.suptitle('Elbow Method Analysis', fontsize=16)
+
         # Values on bars
         for k, diff in zip(K_range[2:], reduction_diffs):
             ax4.text(k, diff + 0.05, f'{diff:.1f}%', 
                     ha='center', va='bottom', fontsize=9)
-    
-    
+
+    #plt.savefig("15_years/first_period/elbow_inertia_1994_2008.png", dpi=150)  ### variation
     plt.tight_layout()
     plt.show()
 
@@ -265,6 +268,9 @@ def silhouette_analysis(X, k_values, random_state=42):
     for i in range(len(k_values), len(axes)):
         axes[i].remove()
     
+    # Global title  - ---variation
+    plt.suptitle('Silhouette Analysis', fontsize=16)
+    #plt.savefig("15_years/first_period/silhouette_1994_2008.png", dpi=150)  ### variation
     plt.tight_layout()
     plt.show()
     
@@ -300,10 +306,7 @@ def davies_bouldin_analysis(X_pca, k_values, results, random_state=42):
         plt.plot(k_values[:len(db_scores)], db_scores, 'bo-', linewidth=2, markersize=8)
         plt.axhline(y=2.0, color='green', linestyle='--', alpha=0.7, label='Goodness limit (2.0)')
 
-        # Highlight the smaller value
-        min_idx = np.argmin(db_scores)
-        plt.plot(k_values[min_idx], db_scores[min_idx], 'ro', markersize=12, 
-                 label=f'Best for k={optimal_k}')
+    
         
         plt.xlabel('Number of clusters (k)')
         plt.ylabel('Davies-Bouldin Index')
@@ -311,13 +314,16 @@ def davies_bouldin_analysis(X_pca, k_values, results, random_state=42):
         plt.grid(True, alpha=0.3)
         plt.legend()
         plt.xticks(k_values[:len(db_scores)])
-        plt.ylim(1.5,2.05)
+        plt.ylim(1.5,2.20)
         
         # Annotate the values
         for i, (k, score) in enumerate(zip(k_values[:len(db_scores)], db_scores)):
             plt.annotate(f'{score:.2f}', (k, score), 
                         textcoords="offset points", xytext=(0,10), ha='center')
         
+        # Global title  - ---variation
+        plt.suptitle('Davies-Bouldin Analysis', fontsize=16)
+        #plt.savefig("15_years/first_period/davies_bouldin_1994_2008.png", dpi=150)  ### variation
         plt.tight_layout()
         plt.show()
     

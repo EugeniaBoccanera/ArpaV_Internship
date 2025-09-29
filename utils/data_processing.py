@@ -27,7 +27,8 @@ def prepare_data_matrix(dataset):
             if spatial_dims:  # If there are spatial dimensions to stack
                 stacked = var_data.stack(features=spatial_dims)       # From shape: (time=1827, pressure=3, lat=201, lon=321)
                 # conversion to a numpy array
-                matrix = stacked.values        # To:  shape(time=1827, features=193563)  (3×201×321=193563) for each variable
+                #matrix = stacked.values        # To:  shape(time=1827, features=193563)  (3×201×321=193563) for each variable
+                matrix = stacked.values.astype(np.float32)
                 print(f"     → {var}: {var_data.dims} → {matrix.shape}")
 
         data_matrices[var] = matrix
@@ -42,17 +43,44 @@ def prepare_data_matrix(dataset):
     return combined_matrix, data_matrices
 
 
-##################################################### global standardization
+##################################################### separate standardization
 
-def apply_global_standardization(X):
+def apply_separate_standardization(X, spatial_size):
     """
-    Applies global standardization to the data matrix
-    """
-    global_mean = X.mean()    # Compute the global mean
-    global_std = X.std()      # Compute the global standard deviation
-    X_standardized = (X - global_mean) / global_std
+    Applies separate standardization to temperature and geopotential data
     
-    return X_standardized, global_mean, global_std
+    """
+    
+    # Split the matrix into temperature and geopotential parts
+    X_temperature = X[:, :spatial_size]        # First half: temperature (T)
+    X_geopotential = X[:, spatial_size:]       # Second half: geopotential (Z)
+    
+    print(f"Temperature matrix shape: {X_temperature.shape}")
+    print(f"Geopotential matrix shape: {X_geopotential.shape}")
+    
+    # Compute statistics for each variable separately
+    t_mean = X_temperature.mean()
+    t_std = X_temperature.std()
+    z_mean = X_geopotential.mean()
+    z_std = X_geopotential.std()
+    
+    print(f"Temperature - Mean: {t_mean:.2f}, Std: {t_std:.2f}")
+    print(f"Geopotential - Mean: {z_mean:.2f}, Std: {z_std:.2f}")
+    
+    # Standardize each variable separately
+    X_temperature_std = (X_temperature - t_mean) / t_std
+    X_geopotential_std = (X_geopotential - z_mean) / z_std
+    
+    # Recombine the standardized matrices
+    X_standardized = np.concatenate([X_temperature_std, X_geopotential_std], axis=1)
+    
+    print(f"Combined standardized matrix shape: {X_standardized.shape}")
+    
+    # Verify standardization
+    print(f"Temperature after standardization - Mean: {X_temperature_std.mean():.6f}, Std: {X_temperature_std.std():.6f}")
+    print(f"Geopotential after standardization - Mean: {X_geopotential_std.mean():.6f}, Std: {X_geopotential_std.std():.6f}")
+    
+    return X_standardized, t_mean, t_std, z_mean, z_std
 
 #################################################### incremental PCA
 
